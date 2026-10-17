@@ -62,6 +62,20 @@ export default function Admin() {
 
   const qr = (data) => `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(data)}`;
 
+  function duzeltBase(v) {
+    v = (v || "").trim();
+    if (v && !/^[a-z]+:\/\//i.test(v)) v = "https://" + v;
+    return v;
+  }
+
+  function baseUyarisi() {
+    try {
+      const h = new URL(base).hostname;
+      if (!h.includes(".")) return "⚠️ Adres hatalı görünüyor — tam adres olmalı, örn: https://cems-tea-garden.vercel.app";
+      return "";
+    } catch { return base ? "⚠️ Adres hatalı görünüyor." : ""; }
+  }
+
   async function kopyala(url) {
     try { await navigator.clipboard.writeText(url); }
     catch {
@@ -138,7 +152,8 @@ export default function Admin() {
         <div className="card" style={{ marginTop: 12 }}>
           <b>QR Kodları + Linkler</b>
           <div className="muted">Yeni masa/dükkan ekleyince QR ve link otomatik oluşur. Linkler doğrudan sipariş ekranını açar.</div>
-          <div style={{ marginTop: 8 }}><label>Site adresi (Vercel sonrası güncelleyin)</label><input value={base} onChange={(e) => setBase(e.target.value)} /></div>
+          <div style={{ marginTop: 8 }}><label>Site adresi (dokunma, otomatik dolar — örn: https://cems-tea-garden.vercel.app)</label><input value={base} onChange={(e) => setBase(duzeltBase(e.target.value))} placeholder="https://cems-tea-garden.vercel.app" /></div>
+          {baseUyarisi() && <div style={{ color: "#f87171", fontWeight: 700 }}>{baseUyarisi()}</div>}
 
           <h4>🛵 Dükkan QR'ları (her dükkana ayrı)</h4>
           <div className="row">
