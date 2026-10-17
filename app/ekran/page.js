@@ -7,17 +7,23 @@ function saat(iso) {
   catch { return ""; }
 }
 
-function beep() {
+function beep(ctx) {
+  if (!ctx) return;
+  const play = () => {
+    try {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = 880;
+      o.start();
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+      o.stop(ctx.currentTime + 0.6);
+    } catch {}
+  };
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.connect(g); g.connect(ctx.destination);
-    o.frequency.value = 880;
-    o.start();
-    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
-    o.stop(ctx.currentTime + 0.6);
-  } catch {}
+    if (ctx.state === "suspended") ctx.resume().then(play).catch(play);
+    else play();
+  } catch { play(); }
 }
 
 function caylar() {
@@ -34,27 +40,62 @@ export default function Ekran() {
   const [alarm, setAlarm] = useState(false);
   const prevIds = useRef(new Set());
   const [sound, setSound] = useState(true);
+  const [unlocked, setUnlocked] = useState(false);
   const alarmTimer = useRef(null);
+  const audioRef = useRef(null);
+
+  function getCtx() {
+    try {
+      if (!audioRef.current) audioRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      return audioRef.current;
+    } catch { return null; }
+  }
+
+  async function unlockAudio() {
+    const ctx = getCtx();
+    if (ctx && ctx.state === "suspended") { try { await ctx.resume(); } catch {} }
+    setUnlocked(true);
+  }
+
+  useEffect(() => {
+    const h = () => unlockAudio();
+    window.addEventListener("click", h);
+    window.addEventListener("keydown", h);
+    window.addEventListener("touchstart", h);
+    return () => {
+      window.removeEventListener("click", h);
+      window.removeEventListener("keydown", h);
+      window.removeEventListener("touchstart", h);
+    };
+  }, []);
+
+  function testSes() {
+    const v = !sound;
+    setSound(v);
+    if (v) {
+      unlockAudio();
+      beep(getCtx());
+      caylar();
+    }
+  }
 
   async function load() {
     const r = await fetch("/api/orders?bugun=1");
     const j = await r.json();
     const aktif = j.filter((o) => o.status === "bekliyor" || o.status === "hazir");
-    if (sound) {
-      const ids = new Set(aktif.map((o) => o.id));
-      let yeni = false;
-      for (const id of ids) if (!prevIds.current.has(id)) { yeni = true; break; }
-      if (yeni && prevIds.current.size > 0) {
-        beep();
+    const ids = new Set(aktif.map((o) => o.id));
+    let yeni = false;
+    for (const id of ids) if (!prevIds.current.has(id)) { yeni = true; break; }
+    if (yeni && prevIds.current.size > 0) {
+      setAlarm(true);
+      if (alarmTimer.current) clearTimeout(alarmTimer.current);
+      alarmTimer.current = setTimeout(() => setAlarm(false), 8000);
+      if (sound) {
+        beep(getCtx());
         caylar();
-        setAlarm(true);
-        if (alarmTimer.current) clearTimeout(alarmTimer.current);
-        alarmTimer.current = setTimeout(() => setAlarm(false), 8000);
       }
-      prevIds.current = ids;
-    } else {
-      prevIds.current = new Set(aktif.map((o) => o.id));
     }
+    prevIds.current = ids;
     // Önce hazırlanmamış (en eski üstte), sonra hazırlar (soluk, altta)
     aktif.sort((a, b) => {
       if (a.status !== b.status) return a.status === "bekliyor" ? -1 : 1;
@@ -111,11 +152,12 @@ export default function Ekran() {
         <TeaLogo />
         <span className="muted">SİPARİŞ AKIŞI • Bugün {bugun} • gece 12'de arşivlenir</span>
         <div className="row">
-          <button className="btn ghost" onClick={() => setSound(!sound)}>{sound ? "Ses: Açık" : "Ses: Kapalı"}</button>
+          <button className="btn ghost" onClick={testSes}>{sound ? "🔔 Ses: Açık" : "🔇 Ses: Kapalı"}</button>
           <a href="/" className="muted">Menü</a>
         </div>
       </div>
       {alarm && <div className="caylar-alarm">ÇAYLARRRR! Yeni sipariş geldi</div>}
+      {!unlocked && <div className="card" style={{ borderLeft: "6px solid #f59e0b", marginTop: 8 }}>🔇 Bildirim sesi için ekrana <b>bir kez dokun</b> (tarayıcı kilidi). Sonra "🔔 Ses: Açık" düğmesine basıp test et.</div>}
       <div className="container" style={{ maxWidth: 1400 }}>
         <div className="grid2">
           <div>
