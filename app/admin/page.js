@@ -169,7 +169,7 @@ export default function Admin() {
             })}
           </div>
           {!places.shops.length && <div className="muted">Dükkan yok</div>}
-          <div className="muted" style={{ marginTop: 4 }}>Genel dışarısı linki (yeni/kayıtsız isimler için):</div>
+          <div className="muted" style={{ marginTop: 4 }}>Genel dışarı linki (yeni/kayıtsız isimler için):</div>
           <LinkSatir url={`${base}/s?konum=disari`} />
 
           <h4>🌿 Bahçe — Masa QR'ları</h4>

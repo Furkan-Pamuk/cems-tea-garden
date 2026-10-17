@@ -124,7 +124,7 @@ export default function Ekran() {
             {!bahce.length && <div className="muted">Sipariş yok</div>}
           </div>
           <div>
-            <h2 style={{ color: "#f59e0b" }}>🛵 DIŞARISI ({disari.length})</h2>
+            <h2 style={{ color: "#f59e0b" }}>🛵 DIŞARI ({disari.length})</h2>
             {disari.map((o) => <Kart key={o.id} o={o} />)}
             {!disari.length && <div className="muted">Sipariş yok</div>}
           </div>

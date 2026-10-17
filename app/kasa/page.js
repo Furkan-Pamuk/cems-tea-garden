@@ -125,7 +125,7 @@ export default function Kasa() {
                   <div className="card"><div className="muted">Bahşiş</div><div className="big">{rapor.bahsis ?? 0} TL</div></div>
                   <div className="card"><div className="muted">Nakit / Borca / Tahsilat</div><div className="big">{rapor.nakitToplam} / {rapor.borcToplam} / {rapor.tahsilToplam} TL</div></div>
                   <div className="card"><div className="muted">Bahçe</div><div className="big">{rapor.bahce} TL</div></div>
-                  <div className="card"><div className="muted">Dışarısı</div><div className="big">{rapor.disari} TL</div></div>
+                  <div className="card"><div className="muted">Dışarı</div><div className="big">{rapor.disari} TL</div></div>
                 </div>
                 <div className="card" style={{ marginTop: 8 }}>
                   <b>Ürün kırılımı</b>

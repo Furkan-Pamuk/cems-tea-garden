@@ -131,7 +131,7 @@ function Icerik() {
         <div className="card">
           <div className="row">
             <button className={location === "bahce" ? "btn" : "btn ghost"} onClick={() => setLocation("bahce")}>Bahçe</button>
-            <button className={location === "disari" ? "btn warn" : "btn ghost"} onClick={() => setLocation("disari")}>Dışarısı</button>
+            <button className={location === "disari" ? "btn warn" : "btn ghost"} onClick={() => setLocation("disari")}>Dışarı</button>
           </div>
           <div style={{ marginTop: 12 }}>
             <label>{location === "bahce" ? "Masa seç" : "Dükkan / İsim seç veya yaz"}</label>

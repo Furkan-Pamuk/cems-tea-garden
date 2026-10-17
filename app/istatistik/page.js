@@ -46,7 +46,7 @@ export default function Istatistik() {
             <div className="grid2">
               <div className="card"><div className="muted">Ciro ({data.ozet.siparis} sipariş)</div><div className="big">{data.ozet.ciro} TL</div></div>
               <div className="card"><div className="muted">Kar (tahmini)</div><div className="big" style={{ color: "#22c55e" }}>{data.ozet.kar} TL</div></div>
-              <div className="card"><div className="muted">Bahçe / Dışarısı</div><div className="big">{data.ozet.bahce} / {data.ozet.disari} TL</div></div>
+              <div className="card"><div className="muted">Bahçe / Dışarı</div><div className="big">{data.ozet.bahce} / {data.ozet.disari} TL</div></div>
               <div className="card"><div className="muted">Nakit / Borca yazılan / Bahşiş</div><div className="big">{data.ozet.nakit} / {data.ozet.borc} / {data.ozet.bahsis ?? 0} TL</div></div>
             </div>
 

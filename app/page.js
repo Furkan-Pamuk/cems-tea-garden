@@ -6,22 +6,19 @@ export default function Home() {
       <h1><TeaLogo size={34} /></h1>
       <p className="muted">Çay ocağı sipariş ve takip sistemi</p>
 
-      <div className="card" style={{ marginTop: 16, borderLeft: "6px solid #22c55e" }}>
-        <div className="big">📱 Müşteri Linki</div>
-        <p className="muted">Müşteriler ve dükkanlar QR kodla bu sayfaya gelir, sipariş verir.</p>
-        <div className="row nav">
-          <a href="/s">Sipariş Ver (/s)</a>
-        </div>
-      </div>
+      <a href="/s" className="card clickcard" style={{ marginTop: 16, borderLeft: "6px solid #22c55e" }}>
+        <div className="big">📱 Müşteri Linki — Sipariş Ver →</div>
+        <p className="muted">Müşteriler ve dükkanlar QR kodla bu sayfaya gelir, sipariş verir. Açmak için kutuya dokun.</p>
+      </a>
 
       <div className="card" style={{ marginTop: 12, borderLeft: "6px solid #f59e0b" }}>
         <div className="big">🔒 Admin Linkleri (sadece siz)</div>
         <p className="muted">Bu linkler müşterilerle paylaşılmaz.</p>
-        <div className="row nav" style={{ marginTop: 8 }}>
-          <a href="/ekran">Ocak Ekranı (/ekran)</a>
-          <a href="/kasa">Kasa / Borç (/kasa)</a>
-          <a href="/istatistik">İstatistik (/istatistik)</a>
-          <a href="/admin">Admin — Ürün, Masa, QR (/admin)</a>
+        <div className="grid2" style={{ marginTop: 8 }}>
+          <a className="bigbtn" href="/ekran">🖥️ Ocak Ekranı<small>Sipariş akışı: Bahçe / Dışarı</small></a>
+          <a className="bigbtn" href="/kasa">💰 Kasa / Borç<small>Hesap kapatma, borç defteri, günlük rapor</small></a>
+          <a className="bigbtn" href="/istatistik">📊 İstatistik<small>Aylık ciro, kar, dükkan ve saat kırılımı</small></a>
+          <a className="bigbtn" href="/admin">⚙️ Admin<small>Ürün, masa, dükkan, QR kodları</small></a>
         </div>
       </div>
 
