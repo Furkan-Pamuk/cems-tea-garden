@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { readDb, writeDb } from "@/lib/db";
+import { getOrders, collectDebt } from "@/lib/db";
 
 export async function GET() {
-  const db = readDb();
+  const orders = await getOrders();
   const map = {};
-  for (const o of db.orders || []) {
+  for (const o of orders) {
     if (o.status !== "kapandi" || o.payMethod !== "borc" || o.debtPaid) continue;
     const key = o.borrower || o.name;
     if (!map[key]) map[key] = { name: key, orders: [], total: 0 };
@@ -18,14 +18,6 @@ export async function POST(req) {
   const body = await req.json();
   const borrower = String(body.borrower || "").trim();
   if (!borrower) return NextResponse.json({ error: "isim gerekli" }, { status: 400 });
-  const db = readDb();
-  const now = new Date().toISOString();
-  for (const o of db.orders || []) {
-    if (o.status === "kapandi" && o.payMethod === "borc" && !o.debtPaid && (o.borrower || o.name) === borrower) {
-      o.debtPaid = true;
-      o.debtPaidAt = now;
-    }
-  }
-  writeDb(db);
+  await collectDebt(borrower);
   return NextResponse.json({ ok: true });
 }

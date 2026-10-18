@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
-import { readDb, writeDb, orderDay, todayKey } from "@/lib/db";
+import { getOrders, createOrder, getProducts, todayKey } from "@/lib/db";
 
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status");
   const location = searchParams.get("location");
   const bugun = searchParams.get("bugun");
-  const db = readDb();
   const today = todayKey();
-  let orders = [...(db.orders || [])].map((o) => ({ ...o, day: orderDay(o) })).sort((a, b) => b.id - a.id);
+  let orders = await getOrders();
   if (bugun) orders = orders.filter((o) => o.day === today);
   if (status) orders = orders.filter((o) => o.status === status);
   if (location) orders = orders.filter((o) => o.location === location);
@@ -23,8 +22,8 @@ export async function POST(req) {
   if (!name) return NextResponse.json({ error: "isim/masa gerekli" }, { status: 400 });
   if (!items.length) return NextResponse.json({ error: "ürün seçilmedi" }, { status: 400 });
 
-  const db = readDb();
-  const pmap = Object.fromEntries((db.products || []).map((p) => [p.id, p]));
+  const products = await getProducts();
+  const pmap = Object.fromEntries(products.map((p) => [p.id, p]));
   const tip = Math.max(0, Number(body.tip) || 0);
   let total = 0;
   const norm = items.map((i) => {
@@ -36,11 +35,8 @@ export async function POST(req) {
     return { id: i.id, name: iname, price, qty };
   });
 
-  const id = db.seq || 1;
-  db.seq = id + 1;
   const now = new Date();
-  const order = {
-    id,
+  const order = await createOrder({
     createdAt: now.toISOString(),
     day: todayKey(now),
     location,
@@ -49,16 +45,6 @@ export async function POST(req) {
     total: total + tip,
     tip,
     status: "bekliyor",
-    payMethod: null,
-    borrower: null,
-    closedAt: null,
-    debtPaid: false,
-    debtPaidAt: null,
-  };
-  db.orders = db.orders || [];
-  db.orders.push(order);
-  // keep last 2000
-  if (db.orders.length > 2000) db.orders = db.orders.slice(-2000);
-  writeDb(db);
+  });
   return NextResponse.json(order);
 }

@@ -1,17 +1,17 @@
 import { NextResponse } from "next/server";
-import { readDb, todayKey, localKey } from "@/lib/db";
+import { getOrders, getProducts, todayKey, localKey } from "@/lib/db";
 
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const date = searchParams.get("date") || todayKey();
-  const db = readDb();
-  const orders = db.orders || [];
+  const orders = await getOrders();
+  const products = await getProducts();
+  const costMap = Object.fromEntries(products.map((p) => [p.id, Number(p.cost) || 0]));
   const closed = orders.filter((o) => o.status === "kapandi" && o.closedAt && localKey(o.closedAt) === date);
   const nakit = closed.filter((o) => o.payMethod === "nakit");
   const borc = closed.filter((o) => o.payMethod === "borc");
   const tahsil = orders.filter((o) => o.debtPaidAt && localKey(o.debtPaidAt) === date && o.payMethod === "borc");
   const sum = (arr) => arr.reduce((s, o) => s + (Number(o.total) || 0), 0);
-  const costMap = Object.fromEntries((db.products || []).map((p) => [p.id, Number(p.cost) || 0]));
   const profitOf = (o) => (o.items || []).reduce((s, it) => s + ((Number(it.price) || 0) - (costMap[it.id] || 0)) * (Number(it.qty) || 0), 0);
   const kar = (arr) => arr.reduce((s, o) => s + profitOf(o), 0);
   const byProduct = {};

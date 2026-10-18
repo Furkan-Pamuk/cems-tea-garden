@@ -1,23 +1,18 @@
 import { NextResponse } from "next/server";
-import { readDb, writeDb, isAdmin } from "@/lib/db";
+import { getPlaces, addPlace, removePlace, isAdmin } from "@/lib/db";
 
 export async function GET() {
-  const db = readDb();
-  return NextResponse.json({ tables: db.tables || [], shops: db.shops || [] });
+  return NextResponse.json(await getPlaces());
 }
 
 export async function POST(req) {
   if (!isAdmin(req)) return NextResponse.json({ error: "yetkisiz" }, { status: 401 });
   const body = await req.json();
-  const db = readDb();
-  db.tables = db.tables || [];
-  db.shops = db.shops || [];
   const v = String(body.value || "").trim();
   if (!v) return NextResponse.json({ error: "değer boş" }, { status: 400 });
-  if (body.action === "add-table") { if (!db.tables.includes(v)) db.tables.push(v); }
-  if (body.action === "remove-table") { db.tables = db.tables.filter((x) => x !== v); }
-  if (body.action === "add-shop") { if (!db.shops.includes(v)) db.shops.push(v); }
-  if (body.action === "remove-shop") { db.shops = db.shops.filter((x) => x !== v); }
-  writeDb(db);
-  return NextResponse.json({ tables: db.tables, shops: db.shops });
+  if (body.action === "add-table") return NextResponse.json(await addPlace("table", v));
+  if (body.action === "remove-table") return NextResponse.json(await removePlace("table", v));
+  if (body.action === "add-shop") return NextResponse.json(await addPlace("shop", v));
+  if (body.action === "remove-shop") return NextResponse.json(await removePlace("shop", v));
+  return NextResponse.json({ error: "bilinmeyen işlem" }, { status: 400 });
 }

@@ -1,27 +1,26 @@
 import { NextResponse } from "next/server";
-import { readDb, localKey } from "@/lib/db";
+import { getOrders, getProducts, localKey } from "@/lib/db";
 
 // GET /api/istatistik?ay=YYYY-MM
-// Aylık: bahçe ürün kırılımı, dükkan bazında ürün kırılımı, saatlik satış,
-// en karlı ürünler, günlük özet (arşiv).
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const now = new Date();
   const ay = searchParams.get("ay") || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
-  const db = readDb();
-  const costMap = Object.fromEntries((db.products || []).map((p) => [p.id, Number(p.cost) || 0]));
+  const orders = await getOrders();
+  const products = await getProducts();
+  const costMap = Object.fromEntries(products.map((p) => [p.id, Number(p.cost) || 0]));
   const profitOf = (o) =>
     (o.items || []).reduce((s, it) => s + ((Number(it.price) || 0) - (costMap[it.id] || 0)) * (Number(it.qty) || 0), 0);
 
-  const closed = (db.orders || []).filter(
+  const closed = orders.filter(
     (o) => o.status === "kapandi" && o.closedAt && localKey(o.closedAt).slice(0, 7) === ay
   );
 
   const sum = (arr) => arr.reduce((s, o) => s + (Number(o.total) || 0), 0);
   const karOf = (arr) => arr.reduce((s, o) => s + profitOf(o), 0);
+  const bahsisOf = (arr) => arr.reduce((s, o) => s + (Number(o.tip) || 0), 0);
 
-  // Bahçe: ürün kırılımı
   const bahceMap = {};
   for (const o of closed.filter((x) => x.location === "bahce")) {
     for (const it of o.items || []) {
@@ -32,7 +31,6 @@ export async function GET(req) {
     }
   }
 
-  // Dükkanlar: her dükkana neyden ne kadar
   const dukMap = {};
   for (const o of closed.filter((x) => x.location === "disari")) {
     const key = o.borrower || o.name;
@@ -47,7 +45,6 @@ export async function GET(req) {
     }
   }
 
-  // Saatlik: hangi saatte ne satıldı
   const saatMap = {};
   for (const o of closed) {
     const h = new Date(o.createdAt).getHours();
@@ -65,7 +62,6 @@ export async function GET(req) {
       top: Object.entries(s.urunler).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([n, q]) => `${n} x${q}`).join(", "),
     }));
 
-  // En karlı ürünler (tüm konumlar)
   const karMap = {};
   for (const o of closed) {
     for (const it of o.items || []) {
@@ -76,7 +72,6 @@ export async function GET(req) {
     }
   }
 
-  // Günlük özet (arşiv)
   const gunMap = {};
   for (const o of closed) {
     const g = localKey(o.closedAt);
@@ -94,8 +89,8 @@ export async function GET(req) {
     ozet: {
       siparis: closed.length,
       ciro: sum(closed),
-      kar: karOf(closed) + closed.reduce((s, o) => s + (Number(o.tip) || 0), 0),
-      bahsis: closed.reduce((s, o) => s + (Number(o.tip) || 0), 0),
+      kar: karOf(closed) + bahsisOf(closed),
+      bahsis: bahsisOf(closed),
       nakit: sum(closed.filter((o) => o.payMethod === "nakit")),
       borc: sum(closed.filter((o) => o.payMethod === "borc")),
       bahce: sum(closed.filter((o) => o.location === "bahce")),

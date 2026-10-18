@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { readDb, writeDb } from "@/lib/db";
+import { getOrders } from "@/lib/db";
 
 function groupOpen(orders) {
   const map = {};
@@ -14,6 +14,5 @@ function groupOpen(orders) {
 }
 
 export async function GET() {
-  const db = readDb();
-  return NextResponse.json(groupOpen(db.orders || []));
+  return NextResponse.json(groupOpen(await getOrders()));
 }
