@@ -88,13 +88,33 @@ export default function Admin() {
     setTimeout(() => setKopya(""), 2000);
   }
 
-  function LinkSatir({ url }) {
+  function LinkSatir({ url, ad }) {
     return (
-      <div className="row" style={{ marginTop: 6 }}>
-        <span className="muted" style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{url}</span>
-        <button className="btn ghost" onClick={() => kopyala(url)}>{kopya === url ? "Kopyalandı ✓" : "Kopyala"}</button>
+      <div>
+        <div className="row" style={{ marginTop: 6 }}>
+          <span className="muted" style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{url}</span>
+        </div>
+        <div className="row" style={{ marginTop: 4 }}>
+          <button className="btn ghost" onClick={() => kopyala(url)}>{kopya === url ? "Kopyalandı ✓" : "Kopyala"}</button>
+          <button className="btn ghost" onClick={() => paylas(url, ad)}>📤 Paylaş</button>
+        </div>
       </div>
     );
+  }
+
+  async function paylas(url, ad) {
+    const metin = `${ad} — sipariş linki: ${url}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: ad, text: metin, url });
+        return;
+      }
+    } catch {}
+    try {
+      window.open(`https://wa.me/?text=${encodeURIComponent(metin)}`, "_blank");
+    } catch {
+      kopyala(url);
+    }
   }
 
   if (!ok) {
@@ -157,20 +177,23 @@ export default function Admin() {
 
           <h4>🛵 Dükkan QR'ları (her dükkana ayrı)</h4>
           <div className="row">
+            <a className="btn blue" href="/admin/yazdir" target="_blank">🖨️ Tüm QR'ları Yazdır / PDF</a>
+          </div>
+          <div className="row">
             {places.shops.map((s) => {
               const url = `${base}/s?konum=disari&dukkan=${encodeURIComponent(s)}`;
               return (
                 <div key={s} className="card" style={{ textAlign: "center", maxWidth: 260 }}>
                   <b>{s}</b><br />
                   <img src={qr(url)} alt={s} />
-                  <LinkSatir url={url} />
+                  <LinkSatir url={url} ad={s} />
                 </div>
               );
             })}
           </div>
           {!places.shops.length && <div className="muted">Dükkan yok</div>}
           <div className="muted" style={{ marginTop: 4 }}>Genel dışarı linki (yeni/kayıtsız isimler için):</div>
-          <LinkSatir url={`${base}/s?konum=disari`} />
+          <LinkSatir url={`${base}/s?konum=disari`} ad="Dışarı Genel" />
 
           <h4>🌿 Bahçe — Masa QR'ları</h4>
           <div className="row">
@@ -180,7 +203,7 @@ export default function Admin() {
                 <div key={t} className="card" style={{ textAlign: "center", maxWidth: 260 }}>
                   <b>{t}</b><br />
                   <img src={qr(url)} alt={t} />
-                  <LinkSatir url={url} />
+                  <LinkSatir url={url} ad={t} />
                 </div>
               );
             })}

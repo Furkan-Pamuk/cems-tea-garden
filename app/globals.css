@@ -36,3 +36,14 @@ label { font-size: 13px; opacity: .8; }
 .bigbtn:active { transform: scale(.98); }
 .clickcard { cursor: pointer; text-decoration: none; display: block; color: inherit; }
 .clickcard:active { transform: scale(.99); }
+.print-page { background: #fff; color: #111; min-height: 100vh; }
+.qr-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 12px; }
+.qr-print-card { border: 2px solid #111; border-radius: 12px; padding: 12px; text-align: center; page-break-inside: avoid; }
+.qr-print-ad { font-size: 28px; font-weight: 800; }
+.qr-print-sub { font-size: 14px; color: #444; }
+.qr-print-url { font-size: 11px; color: #666; word-break: break-all; }
+.qr-print-card img { width: 220px; height: 220px; }
+@media print {
+  .no-print { display: none !important; }
+  .qr-grid { padding: 0; }
+}
