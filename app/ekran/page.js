@@ -7,40 +7,53 @@ function saat(iso) {
   catch { return ""; }
 }
 
-function beep(ctx) {
+function tone(ctx, freq, delay = 0) {
   if (!ctx) return;
   const play = () => {
     try {
       const o = ctx.createOscillator();
       const g = ctx.createGain();
       o.connect(g); g.connect(ctx.destination);
-      o.frequency.value = 880;
+      o.frequency.value = freq;
       o.start();
-      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
-      o.stop(ctx.currentTime + 0.6);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.7);
+      o.stop(ctx.currentTime + 0.7);
     } catch {}
   };
   try {
-    if (ctx.state === "suspended") ctx.resume().then(play).catch(play);
+    if (ctx.state === "suspended") ctx.resume().then(() => setTimeout(play, delay)).catch(play);
+    else if (delay) setTimeout(play, delay);
     else play();
   } catch { play(); }
 }
 
-function caylar() {
+function konus(metin, kuyruk = false) {
   try {
-    const u = new SpeechSynthesisUtterance("Çaylar!");
+    if (!kuyruk) window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(metin);
     u.lang = "tr-TR"; u.rate = 0.95; u.pitch = 1.1;
-    window.speechSynthesis.cancel();
     window.speechSynthesis.speak(u);
   } catch {}
 }
 
+const SECENEKLER = [
+  { id: "zil", etiket: "🔔 Zil sesi" },
+  { id: "caylar", etiket: "📢 Çaylar!" },
+  { id: "ozet", etiket: "🗣️ Siparişi söyle" },
+  { id: "detay", etiket: "📝 İçeriği de oku" },
+];
+
 export default function Ekran() {
   const [orders, setOrders] = useState([]);
   const [alarm, setAlarm] = useState(false);
+  const [alarmMsg, setAlarmMsg] = useState("");
   const prevIds = useRef(new Set());
   const [sound, setSound] = useState(true);
   const [unlocked, setUnlocked] = useState(false);
+  const [bildirim, setBildirim] = useState(() => {
+    try { return localStorage.getItem("bildirim_tipi") || "caylar"; }
+    catch { return "caylar"; }
+  });
   const alarmTimer = useRef(null);
   const audioRef = useRef(null);
 
@@ -69,14 +82,38 @@ export default function Ekran() {
     };
   }, []);
 
-  function testSes() {
-    const v = !sound;
-    setSound(v);
-    if (v) {
-      unlockAudio();
-      beep(getCtx());
-      caylar();
-    }
+  function secTip(id) {
+    setBildirim(id);
+    try { localStorage.setItem("bildirim_tipi", id); } catch {}
+  }
+
+  function ornekle(id) {
+    const ornek = { name: "Bahçe-9", items: [{ qty: 2, name: "Çay" }] };
+    const ornek2 = { name: "Eczane", items: [{ qty: 3, name: "Çay" }] };
+    unlockAudio();
+    if (id === "zil") { tone(getCtx(), 880); tone(getCtx(), 659, 280); }
+    else if (id === "caylar") konus("Çaylar!");
+    else if (id === "ozet") { konus("Bahçe 9 yeni sipariş"); konus("Eczane yeni sipariş", true); }
+    else { konus(`${ornek.name.replace(/-/g, " ")}, 2 Çay`); konus(`${ornek2.name}, 3 Çay`, true); }
+  }
+
+  function duyur(yeniler) {
+    if (!yeniler.length) return;
+    const ilk3 = yeniler.slice(0, 3);
+    setAlarmMsg(ilk3.map((o) => `${o.name}: ${o.items.map((i) => `${i.qty} ${i.name}`).join(", ")}`).join(" • "));
+    setAlarm(true);
+    if (alarmTimer.current) clearTimeout(alarmTimer.current);
+    alarmTimer.current = setTimeout(() => setAlarm(false), 8000);
+    if (!sound) return;
+    if (bildirim === "zil") { tone(getCtx(), 880); tone(getCtx(), 659, 280); return; }
+    try { window.speechSynthesis.cancel(); } catch {}
+    ilk3.forEach((o, i) => {
+      const ad = o.name.replace(/-/g, " ");
+      const icerik = o.items.map((x) => `${x.qty} ${x.name}`).join(", ");
+      if (bildirim === "caylar") konus("Çaylar!", i > 0);
+      else if (bildirim === "ozet") konus(`${ad} yeni sipariş`, i > 0);
+      else konus(`${ad}, ${icerik}`, i > 0);
+    });
   }
 
   async function load() {
@@ -84,17 +121,8 @@ export default function Ekran() {
     const j = await r.json();
     const aktif = j.filter((o) => o.status === "bekliyor" || o.status === "hazir");
     const ids = new Set(aktif.map((o) => o.id));
-    let yeni = false;
-    for (const id of ids) if (!prevIds.current.has(id)) { yeni = true; break; }
-    if (yeni && prevIds.current.size > 0) {
-      setAlarm(true);
-      if (alarmTimer.current) clearTimeout(alarmTimer.current);
-      alarmTimer.current = setTimeout(() => setAlarm(false), 8000);
-      if (sound) {
-        beep(getCtx());
-        caylar();
-      }
-    }
+    const yeniler = aktif.filter((o) => !prevIds.current.has(o.id));
+    if (yeniler.length > 0 && prevIds.current.size > 0) duyur(yeniler);
     prevIds.current = ids;
     // Önce hazırlanmamış (en eski üstte), sonra hazırlar (soluk, altta)
     aktif.sort((a, b) => {
@@ -108,7 +136,13 @@ export default function Ekran() {
     load();
     const t = setInterval(load, 3000);
     return () => clearInterval(t);
-  }, [sound]);
+  }, [sound, bildirim]);
+
+  function testSes() {
+    const v = !sound;
+    setSound(v);
+    if (v) ornekle(bildirim);
+  }
 
   async function setStatus(id, status) {
     await fetch(`/api/orders/${id}`, {
@@ -156,10 +190,25 @@ export default function Ekran() {
           <a href="/" className="muted">Menü</a>
         </div>
       </div>
-      {alarm && <div className="caylar-alarm">ÇAYLARRRR! Yeni sipariş geldi</div>}
-      {!unlocked && <div className="card" style={{ borderLeft: "6px solid #f59e0b", marginTop: 8 }}>🔇 Bildirim sesi için ekrana <b>bir kez dokun</b> (tarayıcı kilidi). Sonra "🔔 Ses: Açık" düğmesine basıp test et.</div>}
+      {alarm && <div className="caylar-alarm">{alarmMsg || "ÇAYLARRRR! Yeni sipariş geldi"}</div>}
       <div className="container" style={{ maxWidth: 1400 }}>
-        <div className="grid2">
+        {!unlocked && <div className="card" style={{ borderLeft: "6px solid #f59e0b", marginTop: 8 }}>🔇 Bildirim sesi için ekrana <b>bir kez dokun</b> (tarayıcı kilidi).</div>}
+        <div className="card" style={{ marginTop: 8 }}>
+          <div className="row">
+            <b>Bildirim tipi:</b>
+            {SECENEKLER.map((s) => (
+              <button key={s.id} className={bildirim === s.id ? "btn" : "btn ghost"} onClick={() => secTip(s.id)}>{s.etiket}</button>
+            ))}
+            <button className="btn blue" onClick={() => ornekle(bildirim)}>▶ Dene</button>
+          </div>
+          <div className="muted" style={{ marginTop: 4 }}>
+            {bildirim === "zil" && "Yeni siparişte zil sesi çalar."}
+            {bildirim === "caylar" && "Yeni siparişte “Çaylar!” diye seslenir."}
+            {bildirim === "ozet" && "Örn: “Bahçe 9 yeni sipariş”, “Eczane yeni sipariş”."}
+            {bildirim === "detay" && "Örn: “Eczane, 3 çay 2 su” — içeriği de okur."}
+          </div>
+        </div>
+        <div className="grid2" style={{ marginTop: 8 }}>
           <div>
             <h2 style={{ color: "#22c55e" }}>🌿 BAHÇE ({bahce.length})</h2>
             {bahce.map((o) => <Kart key={o.id} o={o} />)}
