@@ -187,6 +187,7 @@ export default function Ekran() {
         <span className="muted">SİPARİŞ AKIŞI • Bugün {bugun} • gece 12'de arşivlenir</span>
         <div className="row">
           <button className="btn ghost" onClick={testSes}>{sound ? "🔔 Ses: Açık" : "🔇 Ses: Kapalı"}</button>
+          <a href="/s" className="btn blue">➕ Sipariş Gir</a>
           <a href="/" className="muted">Menü</a>
         </div>
       </div>

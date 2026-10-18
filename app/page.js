@@ -37,6 +37,7 @@ export default function Home() {
           <a className="bigbtn" href="/kasa">💰 Kasa / Borç<small>Hesap kapatma, borç defteri, günlük rapor</small></a>
           <a className="bigbtn" href="/istatistik">📊 İstatistik<small>Aylık ciro, kar, dükkan ve saat kırılımı</small></a>
           <a className="bigbtn" href="/admin">⚙️ Admin<small>Ürün, masa, dükkan, QR kodları</small></a>
+          <a className="bigbtn" href="/s">➕ Elle Sipariş Gir<small>Sözlü verilen siparişi masaya işle</small></a>
         </div>
       </div>
 
