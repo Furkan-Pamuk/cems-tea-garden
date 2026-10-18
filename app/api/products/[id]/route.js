@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
 import { updateProduct, deleteProduct, isAdmin } from "@/lib/db";
 
 export async function PUT(req, { params }) {

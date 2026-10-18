@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
 import { getOrders } from "@/lib/db";
 
 function groupOpen(orders) {

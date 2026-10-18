@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
 import { getOrders, getProducts, localKey } from "@/lib/db";
 
 // GET /api/istatistik?ay=YYYY-MM
