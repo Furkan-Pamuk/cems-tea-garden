@@ -41,14 +41,6 @@ export default function Home() {
       </div>
 
       <div className="card" style={{ marginTop: 12 }}>
-        <div className="big">Kurulum</div>
-        <ol>
-          <li>/admin → fiyatları ve geliş maliyetlerini gir (şifre: cems123)</li>
-          <li>/admin → QR kodlarını yazdır, masalara ve dükkanlara as</li>
-          <li>/ekran → ocak bilgisayarında açık bırak (gece 12'de arşivlenir, sıfırlanır)</li>
-          <li>/kasa → hesap kapatma, borç defteri, günlük rapor</li>
-          <li>/istatistik → aylık ciro/kar, dükkan ve saat kırılımları</li>
-        </ol>
         <button className="btn ghost" onClick={() => { localStorage.removeItem("admin_pw"); setOk(false); }}>Çıkış</button>
       </div>
     </div>
