@@ -119,7 +119,7 @@ function Icerik() {
 
   return (
     <div className="light">
-      <div className="topbar"><span className="row"><a href="/" className="btn ghost">← Geri</a><TeaLogo size={26} /><span> — Sipariş</span></span><span className="muted">canlı</span></div>
+      <div className="topbar"><span className="row"><TeaLogo size={26} /><span> — Sipariş</span></span><span className="muted">canlı</span></div>
       <div className="container" style={{ maxWidth: 640 }}>
         {orderStatus && (
           <div className="card" style={{ borderLeft: "6px solid #38bdf8", marginBottom: 12 }}>
