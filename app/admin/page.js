@@ -62,6 +62,21 @@ export default function Admin() {
 
   const qr = (data) => `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(data)}`;
 
+  const siraliUrunler = [...products].sort((a, b) =>
+    ((a.sira === undefined || a.sira === null ? 9999 : Number(a.sira)) - (b.sira === undefined || b.sira === null ? 9999 : Number(b.sira))) ||
+    String(a.name).localeCompare(String(b.name), "tr"));
+
+  async function move(idx, dir) {
+    const j = idx + dir;
+    if (j < 0 || j >= siraliUrunler.length) return;
+    const a = siraliUrunler[idx], b = siraliUrunler[j];
+    const sa = a.sira === undefined || a.sira === null ? 9999 : Number(a.sira);
+    const sbb = b.sira === undefined || b.sira === null ? 9999 : Number(b.sira);
+    await fetch(`/api/products/${a.id}`, { method: "PUT", headers: H(), body: JSON.stringify({ sira: sbb }) });
+    await fetch(`/api/products/${b.id}`, { method: "PUT", headers: H(), body: JSON.stringify({ sira: sa }) });
+    load();
+  }
+
   function duzeltBase(v) {
     v = (v || "").trim();
     if (v && !/^[a-z]+:\/\//i.test(v)) v = "https://" + v;
@@ -141,11 +156,17 @@ export default function Admin() {
               <input placeholder="Kategori" value={pcat} onChange={(e) => setPcat(e.target.value)} />
               <button className="btn" onClick={addProduct}>Ekle</button>
             </div>
+            <div>Müşteri menüsündeki sırayla aynı. Oklarla yeri değiştir.</div>
             <div style={{ marginTop: 8 }}>
-              {products.map((p) => (
+              {siraliUrunler.map((p, i) => (
                 <div key={p.id} className="row" style={{ justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid #334155" }}>
-                  <span>{p.name} — {p.price} TL (maliyet {p.cost || 0}) [{p.cat || "Diğer"}]</span>
-                  <div className="row"><button className="btn ghost" onClick={() => saveProduct(p)}>Düzenle</button><button className="btn danger" onClick={() => delProduct(p.id)}>Sil</button></div>
+                  <span>{i + 1}. {p.name} — {p.price} TL (maliyet {p.cost || 0}) [{p.cat || "Diğer"}]</span>
+                  <div className="row">
+                    <button className="btn ghost" onClick={() => move(i, -1)}>↑</button>
+                    <button className="btn ghost" onClick={() => move(i, 1)}>↓</button>
+                    <button className="btn ghost" onClick={() => saveProduct(p)}>Düzenle</button>
+                    <button className="btn danger" onClick={() => delProduct(p.id)}>Sil</button>
+                  </div>
                 </div>
               ))}
             </div>

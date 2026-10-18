@@ -12,6 +12,7 @@ function Icerik() {
   const [name, setName] = useState(sp.get("masa") || "");
   const [cart, setCart] = useState({});
   const [tip, setTip] = useState(0);
+  const [ozel, setOzel] = useState(false);
   const [msg, setMsg] = useState("");
   const [sending, setSending] = useState(false);
   const [lastOrder, setLastOrder] = useState(null); // {id, day}
@@ -26,9 +27,9 @@ function Icerik() {
     fetch("/api/products").then((r) => r.json()).then(setProducts);
     fetch("/api/places").then((r) => r.json()).then(setPlaces);
     const m = sp.get("masa");
-    if (m) { setName(m); setLocation("bahce"); }
+    if (m) { setName(m); setLocation("bahce"); setOzel(false); }
     const dk = sp.get("dukkan");
-    if (dk) { setName(dk); setLocation("disari"); }
+    if (dk) { setName(dk); setLocation("disari"); setOzel(false); }
     const k = sp.get("konum");
     if (k === "disari" || k === "bahce") setLocation(k);
     try {
@@ -108,14 +109,17 @@ function Icerik() {
 
   const names = location === "bahce" ? places.tables : places.shops;
 
-  const CAT_ORDER = ["Organik Çaylar", "Sallama Çaylar", "Sıcak Kahveler", "Soğuk Kahveler", "Soğuk İçecekler", "Ekstralar", "Diğer"];
+  const sVal = (p) => (p.sira === undefined || p.sira === null ? 9999 : Number(p.sira));
   const grouped = {};
   for (const p of products) {
     const c = p.cat || "Diğer";
     if (!grouped[c]) grouped[c] = [];
     grouped[c].push(p);
   }
-  const cats = CAT_ORDER.filter((c) => grouped[c]);
+  for (const c of Object.keys(grouped)) grouped[c].sort((a, b) => sVal(a) - sVal(b) || a.name.localeCompare(b.name, "tr"));
+  const catSira = {};
+  for (const c of Object.keys(grouped)) catSira[c] = Math.min(...grouped[c].map(sVal));
+  const cats = Object.keys(grouped).sort((a, b) => (catSira[a] ?? 9999) - (catSira[b] ?? 9999) || a.localeCompare(b, "tr"));
 
   return (
     <div className="light">
@@ -135,13 +139,20 @@ function Icerik() {
           </div>
           <div style={{ marginTop: 12 }}>
             <label>{location === "bahce" ? "Masa seç" : "Dükkan / İsim seç veya yaz"}</label>
-            <div className="row">
-              <select value={names.includes(name) ? name : ""} onChange={(e) => setName(e.target.value)} style={{ flex: 1 }}>
-                <option value="">Seç...</option>
-                {names.map((n) => <option key={n} value={n}>{n}</option>)}
-              </select>
-              <input placeholder="veya yazın" value={name} onChange={(e) => setName(e.target.value)} style={{ flex: 1 }} />
-            </div>
+            <select
+              value={names.includes(name) ? name : (ozel ? "__yeni" : "")}
+              onChange={(e) => {
+                if (e.target.value === "__yeni") { setOzel(true); setName(""); }
+                else { setOzel(false); setName(e.target.value); }
+              }}
+            >
+              <option value="">Seç...</option>
+              {names.map((n) => <option key={n} value={n}>{n}</option>)}
+              <option value="__yeni">✏️ Listede yok, yaz...</option>
+            </select>
+            {ozel && (
+              <input style={{ marginTop: 8 }} placeholder="İsim yazın" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
+            )}
           </div>
         </div>
 

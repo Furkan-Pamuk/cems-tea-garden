@@ -11,6 +11,7 @@ export async function PUT(req, { params }) {
   if (body.price !== undefined) patch.price = Number(body.price);
   if (body.cat !== undefined) patch.cat = body.cat;
   if (body.cost !== undefined) patch.cost = Number(body.cost);
+  if (body.sira !== undefined) patch.sira = Number(body.sira);
   if (body.active !== undefined) patch.active = body.active;
   const p = await updateProduct(params.id, patch);
   if (!p) return NextResponse.json({ error: "bulunamadı" }, { status: 404 });
